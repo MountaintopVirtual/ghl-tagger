@@ -1,51 +1,55 @@
 // index.js
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
+const fetch = require('node-fetch'); // use node-fetch to match your working GHL call
 require('dotenv').config();
 
 const app = express();
 
-// CORS: allow your frontend website
+// Allow requests from your website
 app.use(cors({
-  origin: 'https://gzcapitaladvisors.com', // replace with your website URL
+  origin: 'https://gzcapitaladvisors.com',
   methods: ['POST', 'GET', 'OPTIONS'],
 }));
 
 app.use(express.json());
 
 app.post('/api/add-tag', async (req, res) => {
-  const { contactId } = req.body; // now we expect contactId instead of email
+  const { contactId } = req.body;
   const tag = process.env.GHL_TAG_NAME;
 
   if (!contactId) {
     return res.status(400).json({ error: 'contactId is required' });
   }
 
-  if (!process.env.GHL_ACCESS_TOKEN) {
-    console.error('No API token found in environment variables');
-    return res.status(500).json({ error: 'Server misconfigured: missing API token' });
-  }
-
   try {
-    // Add the tag to the contact
-    const tagResp = await axios.post(
-      `https://services.leadconnectorhq.com/v2/contacts/${contactId}/tags`,
-      { tags: [tag] },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.GHL_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const url = `https://services.leadconnectorhq.com/contacts/${contactId}/tags`;
 
-    console.log('Tag applied successfully:', tagResp.data);
-    res.json({ success: true, data: tagResp.data });
+    const options = {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.GHL_ACCESS_TOKEN}`,
+        Version: '2021-07-28',
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({ tags: [tag] })
+    };
+
+    const response = await fetch(url, options);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Error adding tag:', data);
+      return res.status(response.status).json({ error: 'Failed to add tag', details: data });
+    }
+
+    console.log('Tag applied successfully:', data);
+    res.json({ success: true, data });
 
   } catch (error) {
-    console.error('Error adding tag:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to add tag', details: error.response?.data });
+    console.error('Server error:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
