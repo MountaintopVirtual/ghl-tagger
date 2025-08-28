@@ -1,3 +1,4 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -5,9 +6,9 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ CORS: allow your website
+// ✅ CORS: allow your frontend website
 app.use(cors({
-  origin: 'https://gzcapitaladvisors.com',  // replace with your website
+  origin: 'https://gzcapitaladvisors.com', // replace with your website URL
   methods: ['POST', 'GET', 'OPTIONS'],
 }));
 
@@ -19,6 +20,11 @@ app.post('/api/add-tag', async (req, res) => {
 
   if (!email) {
     return res.status(400).json({ error: 'Email is required' });
+  }
+
+  if (!process.env.GHL_API_KEY) {
+    console.error('No API key found in environment variables');
+    return res.status(500).json({ error: 'Server misconfigured: missing API key' });
   }
 
   try {
@@ -34,7 +40,7 @@ app.post('/api/add-tag', async (req, res) => {
       }
     );
 
-    // 2️⃣ Add the tag
+    // 2️⃣ Apply the tag
     const response = await axios.post(
       'https://rest.gohighlevel.com/v1/contacts/tags',
       { email, tags: [tag] },
