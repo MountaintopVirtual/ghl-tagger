@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ CORS: allow your frontend website
+// CORS: allow your frontend website
 app.use(cors({
   origin: 'https://gzcapitaladvisors.com', // replace with your website URL
   methods: ['POST', 'GET', 'OPTIONS'],
@@ -15,51 +15,37 @@ app.use(cors({
 app.use(express.json());
 
 app.post('/api/add-tag', async (req, res) => {
-  const { email } = req.body;
+  const { contactId } = req.body; // now we expect contactId instead of email
   const tag = process.env.GHL_TAG_NAME;
 
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
+  if (!contactId) {
+    return res.status(400).json({ error: 'contactId is required' });
   }
 
-  if (!process.env.GHL_API_KEY) {
-    console.error('No API key found in environment variables');
-    return res.status(500).json({ error: 'Server misconfigured: missing API key' });
+  if (!process.env.GHL_ACCESS_TOKEN) {
+    console.error('No API token found in environment variables');
+    return res.status(500).json({ error: 'Server misconfigured: missing API token' });
   }
 
   try {
-    // 1️⃣ Ensure the contact exists in GoHighLevel
-    await axios.post(
-      'https://rest.gohighlevel.com/v1/contacts/',
-      { email },
+    // Add the tag to the contact
+    const tagResp = await axios.post(
+      `https://services.leadconnectorhq.com/v2/contacts/${contactId}/tags`,
+      { tags: [tag] },
       {
         headers: {
-          Authorization: `Bearer ${process.env.GHL_API_KEY}`,
+          Authorization: `Bearer ${process.env.GHL_ACCESS_TOKEN}`,
           'Content-Type': 'application/json',
         },
       }
     );
 
-    // 2️⃣ Apply the tag
-    const response = await axios.post(
-      'https://rest.gohighlevel.com/v1/contacts/tags',
-      { email, tags: [tag] },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    console.log('Tag applied successfully:', tagResp.data);
+    res.json({ success: true, data: tagResp.data });
 
-    console.log('GHL response:', response.data);
-    res.json({ success: true, data: response.data });
   } catch (error) {
-    console.error('Error tagging contact:', error.response?.data || error.message);
-    res.status(500).json({ 
-      error: 'Failed to tag contact', 
-      details: error.response?.data 
-    });
+    console.error('Error adding tag:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to add tag', details: error.response?.data });
   }
 });
 
