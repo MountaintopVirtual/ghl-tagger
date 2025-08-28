@@ -1,14 +1,13 @@
 // index.js
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch'); // use node-fetch to match your working GHL call
 require('dotenv').config();
 
 const app = express();
 
 // Allow requests from your website
 app.use(cors({
-  origin: 'https://gzcapitaladvisors.com',
+  origin: 'https://gzcapitaladvisors.com', // replace with your website URL
   methods: ['POST', 'GET', 'OPTIONS'],
 }));
 
@@ -25,7 +24,7 @@ app.post('/api/add-tag', async (req, res) => {
   try {
     const url = `https://services.leadconnectorhq.com/contacts/${contactId}/tags`;
 
-    const options = {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.GHL_ACCESS_TOKEN}`,
@@ -34,9 +33,8 @@ app.post('/api/add-tag', async (req, res) => {
         Accept: 'application/json'
       },
       body: JSON.stringify({ tags: [tag] })
-    };
+    });
 
-    const response = await fetch(url, options);
     const data = await response.json();
 
     if (!response.ok) {
