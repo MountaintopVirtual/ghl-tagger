@@ -7,7 +7,7 @@ const app = express();
 
 // Allow requests from your website
 app.use(cors({
-  origin: 'https://gzcapitaladvisors.com', // replace with your website URL
+  origin: 'https://app.gohighlevel.com/', // replace with your website URL
   methods: ['POST', 'GET', 'OPTIONS'],
 }));
 
