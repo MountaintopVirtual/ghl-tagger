@@ -7,9 +7,10 @@ const app = express();
 
 // Allow requests from your website
 app.use(cors({
-  origin: 'https://www.gzcapitaladvisors.com/', // replace with your website URL
+  origin: ['https://gzcapitaladvisors.com', 'https://www.gzcapitaladvisors.com'],
   methods: ['POST', 'GET', 'OPTIONS'],
 }));
+
 
 app.use(express.json());
 
